@@ -40,6 +40,9 @@ router.post("/register", async (req, res, next) => {
       username,
       password: bcrypt.hashSync(password, 8), // 2^8 rounds
     };
+    if(!password || !username){
+      return next({ message: 'username and password required'})
+    } 
     const created = await User.add(newUser);
     res.status(201).json({ username: created.username, id: created.id });
   } catch (err) {
@@ -87,7 +90,7 @@ router.post("/login", async (req, res, next) => {
     if (!verifies) {
       return next({ message: "invalid credentials", status: 401 });
     }
-    const token = tokenBuilder(user)
+    const token = tokenBuilder(userFromDb)
     res.json({
       message: `welcome, ${username}`,
       token,
