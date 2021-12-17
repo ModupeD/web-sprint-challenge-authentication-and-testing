@@ -1,7 +1,11 @@
-const router = require('express').Router();
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const router = express.Router();
+const { tokenBuilder } = require("./auth-helpers");
+const User = require("../middleware/users/users-model");
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+router.post("/register", async (req, res, next) => {
+  //res.end('implement register, please!');
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -27,10 +31,23 @@ router.post('/register', (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
+  try {
+    // 1- pull u and p from req.body
+    // 2- create a hash off of the password
+    // 3- we will store u and hash to the db
+    const { username, password } = req.body;
+    const newUser = {
+      username,
+      password: bcrypt.hashSync(password, 8), // 2^8 rounds
+    };
+    const created = await User.add(newUser);
+    res.status(201).json({ username: created.username, id: created.id });
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post("/login", async (req, res, next) => {
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -54,6 +71,30 @@ router.post('/login', (req, res) => {
     4- On FAILED login due to `username` not existing in the db, or `password` being incorrect,
       the response body should include a string exactly as follows: "invalid credentials".
   */
+  try {
+    // 1- pull u and p from req.body
+    const { username, password } = req.body;
+    console.log({ username, password });
+    // 2- pull the user using the username
+    const [userFromDb] = await User.findBy({ username });
+    console.log({ userFromDb });
+    if (!userFromDb) {
+      return next({ message: "invalid credentials", status: 401 });
+    }
+    // 3- recreate the hash using password from req.body
+    // 4- compare this agains the hash in the dabase
+    const verifies = bcrypt.compareSync(password, userFromDb.password);
+    if (!verifies) {
+      return next({ message: "invalid credentials", status: 401 });
+    }
+    const token = tokenBuilder(user)
+    res.json({
+      message: `welcome, ${username}`,
+      token,
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;
