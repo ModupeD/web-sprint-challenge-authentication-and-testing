@@ -36,14 +36,19 @@ router.post("/register", async (req, res, next) => {
     // 2- create a hash off of the password
     // 3- we will store u and hash to the db
     const { username, password } = req.body;
+    console.log({ username, password });
     const newUser = {
       username,
       password: bcrypt.hashSync(password, 8), // 2^8 rounds
     };
-    if(!password || !username){
-      return next({ message: 'username and password required'})
-    } 
+
+    console.log({ newUser });
+    if (!password || !username) {
+      return next({ message: "username and password required" });
+    }
     const created = await User.add(newUser);
+    console.log({ created });
+
     res.status(201).json({ username: created.username, id: created.id });
   } catch (err) {
     next(err);
@@ -90,7 +95,7 @@ router.post("/login", async (req, res, next) => {
     if (!verifies) {
       return next({ message: "invalid credentials", status: 401 });
     }
-    const token = tokenBuilder(userFromDb)
+    const token = tokenBuilder(userFromDb);
     res.json({
       message: `welcome, ${username}`,
       token,

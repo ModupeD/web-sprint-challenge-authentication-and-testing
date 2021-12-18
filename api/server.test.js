@@ -52,3 +52,19 @@ describe("[POST] /auth/login", () => {
     expect(res.body).toHaveProperty("message", "welcome, admin");
   });
 });
+
+describe("[POST] /auth/register", () => {
+  let res;
+  beforeEach(async () => {
+    res = await request(server)
+      .post("/api/auth/register")
+      .send({ password: "1234", username: "Captain Murica" });
+  });
+  it("responds with a 201 OK ", async () => {
+    expect(res.status).toBe(201);
+  });
+
+  it("responds with a newly created user", async () => {
+    expect(res.body).toHaveProperty("username", "Captain Murica");
+  });
+});
